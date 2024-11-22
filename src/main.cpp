@@ -59,6 +59,7 @@ int main()
 	ImGui_ImplGlfwGL3_Init(window, true);
 
 	ImGui::StyleColorsDark();
+	ImVec2 windowSize = { 500, 600 };
 
 	// Add GLEW for OpenGL access
 	glewExperimental = GL_TRUE;
@@ -95,24 +96,28 @@ int main()
 		"resources/fragment.shader"
 	);
 
-	// MVP
+	// ---- MVP
+	// Model
 	glm::vec3 modelVector = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), modelVector);
-
-	glm::mat4 viewMatrix = glm::lookAt(
-		glm::vec3(1.0f, 1.0f, 0.5f), // eye
-		glm::vec3(0.0f, 0.0f, 0.0f), // center
-		glm::vec3(0.0f, 1.0f, 0.0f) // up/down - use y only?
-	);
-
-	glm::mat4 orthoProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.1f, 100.0f);
-	// TODO: Add perspective projection
-	// TODO: Add checkbox for choosing projection
+	// View
+	glm::vec3 viewEye = glm::vec3(0.0f, 0.0f, 1.1f);
+	glm::vec3 viewCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 viewUpDown = glm::vec3(0.0f, 1.0f, 0.0f);
+	// Perspective
+	// Ortho
+	float orthoLeft = -2.0f;
+	float orthoRight = 2.0f;
+	float orthoBottom = -2.0f;
+	float orthoTop = 2.0f;
+	// Perspective
+	float fov = 45.0f;
+	
+	// Checkbox for choosing projection
+	bool showOrthoProjection = true;
 
 	// TODO: add color to vertices
 	// TODO: add texture
 
-	glm::mat4 modelViewProjection = orthoProjection * viewMatrix * modelMatrix;
 	unsigned int mvpLocation = glGetUniformLocation(shaderProgram.getProgramId(), "modelViewProjection");
 
 	float slider = 0.0f;
@@ -127,30 +132,85 @@ int main()
 
 		ImGui_ImplGlfwGL3_NewFrame();
 
-		// TODO: send MVP to shader with uniform
+		// Send MVP to shader with uniform
+		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), modelVector);
+		glm::mat4 viewMatrix = glm::lookAt(
+			viewEye, // eye
+			viewCenter, // center
+			viewUpDown // up/down - use y only?
+		);
+		glm::mat4 modelViewProjection;
+
+		if (showOrthoProjection)
+		{
+			glm::mat4 orthoProjection = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, 0.1f, 100.0f);
+			modelViewProjection = orthoProjection * viewMatrix * modelMatrix;
+		}
+		else
+		{
+			glm::mat4 perspectiveProjection = glm::perspective(fov, (float)width / (float)height, 0.1f, 100.0f);
+			modelViewProjection = perspectiveProjection * viewMatrix * modelMatrix;
+		}
+		
 		glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, &modelViewProjection[0][0]);
 
 		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, (void*)0);
 
 		// Dear Im GUI
-		ImVec2 windowSize = { 500, 400 };
 		ImGui::SetNextWindowSize(windowSize);
 		bool imGuiwindow = ImGui::Begin("Im GUI Hello");
 		if (imGuiwindow)
 		{
 			// Model Matrix
-			ImGui::SliderFloat("Model Transform X", &modelVector.x, 0.0f, 10.0f, "%.1f", 0.1f);
+			ImGui::SliderFloat("Model Transform X", &modelVector.x, 0.0f, 1.0f, "%.1f", 1.0f);
 			ImGui::Text("Model Transform X: %.1f", modelVector.x);
 
-			ImGui::SliderFloat("Model Transform Y", &modelVector.y, 0.0f, 10.0f, "%.1f", 0.1f);
+			ImGui::SliderFloat("Model Transform Y", &modelVector.y, 0.0f, 1.0f, "%.1f", 1.0f);
 			ImGui::Text("Model Transform Y: %.1f", modelVector.y);
 
-			ImGui::SliderFloat("Model Transform Z", &modelVector.z, 0.0f, 10.0f, "%.1f", 0.1f);
+			ImGui::SliderFloat("Model Transform Z", &modelVector.z, 0.0f, 1.0f, "%.1f", 1.0f);
 			ImGui::Text("Model Transform Z: %.1f", modelVector.z);
 
-			// TODO: add sliders for view matrix
-			
-			// TODO: add sliders for ortho projection
+			// View matrix
+			// Eye
+			ImGui::SliderFloat("View Eye X", &viewEye.x, 0.0f, 5.0f, "%.1f", 1.0f);
+			ImGui::Text("View Eye X: %.1f", viewEye.x);
+
+			ImGui::SliderFloat("View Eye Y", &viewEye.y, 0.0f, 5.0f, "%.1f", 1.0f);
+			ImGui::Text("View Eye Y: %.1f", viewEye.y);
+
+			ImGui::SliderFloat("View Eye Z", &viewEye.z, 0.0f, 5.0f, "%.1f", 1.0f);
+			ImGui::Text("View Eye Z: %.1f", viewEye.z);
+
+			// Center
+			ImGui::SliderFloat("View Center X", &viewCenter.x, 0.0f, 5.0f, "%.1f", 1.0f);
+			ImGui::Text("View Center X: %.1f", viewCenter.x);
+			ImGui::SliderFloat("View Center Y", &viewCenter.y, 0.0f, 5.0f, "%.1f", 1.0f);
+			ImGui::Text("View Center Y: %.1f", viewCenter.y);
+			ImGui::SliderFloat("View Center Z", &viewCenter.z, -1.0f, 1.0f, "%.1f", 1.0f);
+			ImGui::Text("View Center Z: %.1f", viewCenter.z);
+
+			// Projection
+			ImGui::Checkbox("Show Orthographic:", &showOrthoProjection);
+			if (showOrthoProjection)
+			{
+				// TODO: add sliders for ortho projection
+				ImGui::SliderFloat("Ortho Left", &orthoLeft, -5.0f, 0.0f, "%.1f", 1.0f);
+				ImGui::Text("Ortho Left: %.1f", orthoLeft);
+
+				ImGui::SliderFloat("Ortho Right", &orthoRight, 0.0f, 5.0f, "%.1f", 1.0f);
+				ImGui::Text("Ortho Right: %.1f", orthoRight);
+
+				ImGui::SliderFloat("Ortho Bottom", &orthoBottom, -5.0f, 0.0f, "%.1f", 1.0f);
+				ImGui::Text("Ortho Bottom: %.1f", orthoBottom);
+
+				ImGui::SliderFloat("Ortho Top", &orthoTop, 0.0f, 5.0f, "%.1f", 1.0f);
+				ImGui::Text("Ortho Top: %.1f", orthoTop);
+			}
+			else
+			{
+				ImGui::SliderFloat("Field of View", &fov, 0.0f, 100.0f, "%.1f", 1.0f);
+			}
 
 			// TODO: add checkbox for projection ortho/perspective
 
