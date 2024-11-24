@@ -17,15 +17,24 @@ static void logString(const char* message)
 int width = 1024;
 int height = 768;
 
-float vertices[12] = {
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.5f, 0.5f, 0.0f,
-	-0.5, 0.5f, 0.0f,
+float vertices[24] = {
+	-0.5f, -0.5f, 0.0f, // front - bottom left
+	0.5f, -0.5f, 0.0f, // front - bottom right
+	0.5f, 0.5f, 0.0f, // front - top right
+	-0.5, 0.5f, 0.0f, // front - top left
+	-0.5f, -0.5f, 0.5f, // back - bottom left
+	0.5f, -0.5f, 0.5f, // back - bottom right
+	0.5f, 0.5f, 0.5f, // back - top right
+	-0.5f, 0.5f, 0.5f, // back - top left
 };
 
-unsigned int indices[6] = {
-	0, 1, 2, 0, 2, 3
+unsigned int indices[36] = {
+	0, 1, 2, 0, 2, 3, // front face
+	4, 0, 3, 4, 7, 3, // left face
+	4, 5, 6, 4, 7, 6, // back face
+	1, 5, 6, 1, 2, 6, // right face
+	2, 3, 6, 3, 7, 6, // top face
+	0, 1, 5, 1, 4, 5, // bottom face
 };
 
 int main()
@@ -98,7 +107,7 @@ int main()
 
 	// ---- MVP
 	// Model
-	glm::vec3 modelVector = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 modelVector = glm::vec3(0.0f, 0.0f, 0.0f);
 	// View
 	glm::vec3 viewEye = glm::vec3(0.0f, 0.0f, 1.1f);
 	glm::vec3 viewCenter = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -121,8 +130,6 @@ int main()
 	// TODO: add texture
 
 	unsigned int mvpLocation = glGetUniformLocation(shaderProgram.getProgramId(), "modelViewProjection");
-
-	float slider = 0.0f;
 
 	while (!glfwWindowShouldClose(window))
 	{
