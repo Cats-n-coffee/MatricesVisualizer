@@ -38,6 +38,21 @@ unsigned int indices[36] = {
 	0, 1, 5, 1, 4, 5, // bottom face
 };
 
+float prismVertices[24] = {
+	//		position      |      colors
+	-0.3f, -0.6f, 0.0f,		1.0f, 0.0f, 0.0f, // front - bottom left
+	0.3f, -0.6f, 0.0f,		0.0f, 1.0f, 0.0f, // front - bottom right
+	0.0f, 0.6f, 0.0f,		0.0f, 0.0f, 1.0f, // front - top
+	0.0f, -0.6f, -0.5f,		0.5f, 0.0f, 0.5f, // back
+};
+
+unsigned int prismIndices[12] = {
+	0, 1, 2, // front face
+	0, 1, 3, // bottom face
+	0, 2, 3, // left face
+	1, 2, 3, // right face
+};
+
 int main()
 {
 	// Create window
@@ -104,6 +119,31 @@ int main()
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
+	// Prism
+	unsigned int VAO2, VBO2, EBO2;
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
+
+	glBindVertexArray(VAO2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(prismVertices), &prismVertices, GL_STATIC_DRAW);
+	// vertex position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// vertex color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(prismIndices), &prismIndices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 
 	ShaderProgram shaderProgram = ShaderProgram(
 		"resources/vertex.shader",
@@ -180,6 +220,9 @@ int main()
 
 		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, (void*)0);
 
+		glBindVertexArray(VAO2);
+		glDrawElements(GL_TRIANGLES, sizeof(prismIndices), GL_UNSIGNED_INT, (void*)0);
+
 		// Dear Im GUI
 		ImGui::SetNextWindowSize(windowSize);
 		bool imGuiwindow = ImGui::Begin("Im GUI Hello");
@@ -197,9 +240,9 @@ int main()
 			if (useViewMatrix)
 			{
 				// Eye
-				ImGui::SliderFloat("View Eye X", &viewEye.x, 0.0f, 5.0f, "%.1f", 1.0f);
-				ImGui::SliderFloat("View Eye Y", &viewEye.y, 0.0f, 5.0f, "%.1f", 1.0f);
-				ImGui::SliderFloat("View Eye Z", &viewEye.z, 0.0f, 5.0f, "%.1f", 1.0f);
+				ImGui::SliderFloat("View Eye X", &viewEye.x, -5.0f, 5.0f, "%.1f", 1.0f);
+				ImGui::SliderFloat("View Eye Y", &viewEye.y, -5.0f, 5.0f, "%.1f", 1.0f);
+				ImGui::SliderFloat("View Eye Z", &viewEye.z, -5.0f, 5.0f, "%.1f", 1.0f);
 
 				// Center
 				ImGui::SliderFloat("View Center X", &viewCenter.x, 0.0f, 5.0f, "%.1f", 1.0f);
