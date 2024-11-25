@@ -15,7 +15,8 @@ ShaderProgram::ShaderProgram(const std::string& vertexFilePath, const std::strin
 
 	// TODO: move the line below
 	// ensures the "(location = 0)" gets bound to its "position" name
-	glBindAttribLocation(m_shaderProgram, 0, "position");
+	glBindAttribLocation(m_shaderProgram, 0, "aPosition");
+	glBindAttribLocation(m_shaderProgram, 1, "aColor");
 }
 
 ShaderProgram::~ShaderProgram()

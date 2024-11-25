@@ -17,15 +17,16 @@ static void logString(const char* message)
 int width = 1024;
 int height = 768;
 
-float vertices[24] = {
-	-0.5f, -0.5f, 0.0f, // front - bottom left
-	0.5f, -0.5f, 0.0f, // front - bottom right
-	0.5f, 0.5f, 0.0f, // front - top right
-	-0.5, 0.5f, 0.0f, // front - top left
-	-0.5f, -0.5f, 0.5f, // back - bottom left
-	0.5f, -0.5f, 0.5f, // back - bottom right
-	0.5f, 0.5f, 0.5f, // back - top right
-	-0.5f, 0.5f, 0.5f, // back - top left
+float vertices[48] = {
+	//     position    |          color
+	-0.5f, -0.5f, 0.0f,		0.3f, 0.0f, 0.4f, // front - bottom left
+	0.5f, -0.5f, 0.0f,		0.0f, 0.1f, 0.5f, // front - bottom right
+	0.5f, 0.5f, 0.0f,		0.3f, 0.2f, 0.0f, // front - top right
+	-0.5, 0.5f, 0.0f,		0.3f, 0.0f, 0.4f, // front - top left
+	-0.5f, -0.5f, 0.5f,		0.0f, 0.1f, 0.5f, // back - bottom left
+	0.5f, -0.5f, 0.5f,		0.3f, 0.2f, 0.0f, // back - bottom right
+	0.5f, 0.5f, 0.5f,		0.3f, 0.0f, 0.4f, // back - top right
+	-0.5f, 0.5f, 0.5f,		0.0f, 0.1f, 0.5f, // back - top left
 };
 
 unsigned int indices[36] = {
@@ -90,8 +91,12 @@ int main()
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	// vertex position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	// vertex color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
