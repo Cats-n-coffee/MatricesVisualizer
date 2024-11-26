@@ -78,6 +78,7 @@ int main()
 
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // vsync
+	glEnable(GL_DEPTH_TEST);
 
 	// ImGui
 	ImGui::CreateContext();
@@ -182,7 +183,7 @@ int main()
 
 		glBindVertexArray(VAO);
 		glClearColor(0.1f, 0.1f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ImGui_ImplGlfwGL3_NewFrame();
 
