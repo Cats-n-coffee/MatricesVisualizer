@@ -19,14 +19,14 @@ int height = 768;
 
 float vertices[48] = {
 	//     position    |          color
-	-0.5f, -0.5f, 0.0f,		0.3f, 0.0f, 0.4f, // front - bottom left
-	0.5f, -0.5f, 0.0f,		0.0f, 0.1f, 0.5f, // front - bottom right
-	0.5f, 0.5f, 0.0f,		0.3f, 0.2f, 0.0f, // front - top right
-	-0.5, 0.5f, 0.0f,		0.3f, 0.0f, 0.4f, // front - top left
-	-0.5f, -0.5f, 0.5f,		0.0f, 0.1f, 0.5f, // back - bottom left
-	0.5f, -0.5f, 0.5f,		0.3f, 0.2f, 0.0f, // back - bottom right
-	0.5f, 0.5f, 0.5f,		0.3f, 0.0f, 0.4f, // back - top right
-	-0.5f, 0.5f, 0.5f,		0.0f, 0.1f, 0.5f, // back - top left
+	-0.5f, -0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - bottom left
+	0.5f, -0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - bottom right
+	0.5f, 0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - top right
+	-0.5, 0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - top left
+	-0.5f, -0.5f, 0.5f,		0.0f, 1.0f, 0.0f, // back - bottom left
+	0.5f, -0.5f, 0.5f,		0.0f, 1.0f, 0.0f, // back - bottom right
+	0.5f, 0.5f, 0.5f,		0.0f, 1.0f, 0.0f, // back - top right
+	-0.5f, 0.5f, 0.5f,		0.0f, 1.0f, 0.0f, // back - top left
 };
 
 unsigned int indices[36] = {
@@ -151,9 +151,18 @@ int main()
 		"resources/fragment.shader"
 	);
 
+	// ---- Objects
+	bool showPrism = false;
+
 	// ---- MVP
 	// Model
-	glm::vec3 modelVector = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 translateVector = glm::vec3(0.0f, 0.0f, 0.0f);
+	float rotationXDegrees = 0.0f;
+	glm::vec3 rotationXAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+	float rotationYDegrees = 0.0f;
+	glm::vec3 rotationYAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+	float rotationZDegrees = 0.0f;
+	glm::vec3 rotationZAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 	// View
 	glm::vec3 viewEye = glm::vec3(0.0f, 0.0f, 1.1f);
 	glm::vec3 viewCenter = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -188,7 +197,13 @@ int main()
 		ImGui_ImplGlfwGL3_NewFrame();
 
 		// Send MVP to shader with uniform
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), modelVector);
+		// glm::mat4 modelMatrix = glm::mat4(1.0f);
+		glm::mat4 rotationMatrix = glm::mat4(1.0f);
+		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationXDegrees), rotationXAxis);
+		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationYDegrees), rotationYAxis);
+		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationZDegrees), rotationZAxis);
+		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), translateVector);
+		glm::mat4 modelMatrix = translateMatrix * rotationMatrix;
 		glm::mat4 viewMatrix = glm::mat4(1.0f);
 		glm::mat4 modelViewProjection;
 
@@ -221,8 +236,11 @@ int main()
 
 		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, (void*)0);
 
-		glBindVertexArray(VAO2);
-		glDrawElements(GL_TRIANGLES, sizeof(prismIndices), GL_UNSIGNED_INT, (void*)0);
+		if (showPrism)
+		{
+			glBindVertexArray(VAO2);
+			glDrawElements(GL_TRIANGLES, sizeof(prismIndices), GL_UNSIGNED_INT, (void*)0);
+		}
 
 		// Dear Im GUI
 		ImGui::SetNextWindowSize(windowSize);
@@ -231,9 +249,14 @@ int main()
 		{
 			// Model Matrix
 			ImGui::Text("Model Matrix");
-			ImGui::SliderFloat("Model Transform X", &modelVector.x, -1.0f, 1.0f, "%.1f", 1.0f);
-			ImGui::SliderFloat("Model Transform Y", &modelVector.y, -1.0f, 1.0f, "%.1f", 1.0f);
-			ImGui::SliderFloat("Model Transform Z", &modelVector.z, -1.0f, 1.0f, "%.1f", 1.0f);
+			// Rotation
+			ImGui::SliderFloat("Model Rotation X", &rotationXDegrees, 0.0f, 360.0f);
+			ImGui::SliderFloat("Model Rotation Y", &rotationYDegrees, 0.0f, 360.0f);
+			ImGui::SliderFloat("Model Rotation Z", &rotationZDegrees, 0.0f, 360.0f);
+			// Translation
+			ImGui::SliderFloat("Model Translate X", &translateVector.x, -1.0f, 1.0f, "%.1f", 1.0f);
+			ImGui::SliderFloat("Model Translate Y", &translateVector.y, -1.0f, 1.0f, "%.1f", 1.0f);
+			ImGui::SliderFloat("Model Translate Z", &translateVector.z, -1.0f, 1.0f, "%.1f", 1.0f);
 
 			// View matrix
 			ImGui::Text("View Matrix");
@@ -270,6 +293,9 @@ int main()
 					ImGui::SliderFloat("Field of View", &fov, 0.0f, 100.0f, "%.1f", 1.0f);
 				}
 			}
+
+			// Prism
+			ImGui::Checkbox("Show Prism", &showPrism);
 
 			ImGui::End();
 		}
