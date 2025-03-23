@@ -9,17 +9,19 @@
 
 #include "helpers/ShaderProgram.h"
 
+void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
+
 static void logString(const char* message)
 {
 	std::cout << message << std::endl;
 }
 
-int width = 1024;
-int height = 768;
+int width = 1280;
+int height = 720;
 
 float vertices[48] = {
 	//     position    |          color
-	-0.5f, -0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - bottom left
+	-0.5f, -0.5f, -0.5f,	1.0f, 0.0f, 0.0f, // front - bottom left
 	0.5f, -0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - bottom right
 	0.5f, 0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - top right
 	-0.5, 0.5f, -0.5f,		1.0f, 0.0f, 0.0f, // front - top left
@@ -77,6 +79,7 @@ int main()
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 	glfwSwapInterval(1); // vsync
 	glEnable(GL_DEPTH_TEST);
 
@@ -169,10 +172,13 @@ int main()
 	glm::vec3 viewUpDown = glm::vec3(0.0f, 1.0f, 0.0f);
 	// Perspective
 	// Ortho
-	float orthoLeft = -2.0f;
-	float orthoRight = 2.0f;
-	float orthoBottom = -2.0f;
-	float orthoTop = 2.0f;
+	float aspectRatio = (float)width / (float)height;
+	float size = 4.0f;
+
+	float orthoLeft = -(float)width / 200.0f; // -aspectRatio * size / 2.0f;
+	float orthoRight = (float)width / 200.0f; // aspectRatio * size / 2.0f;
+	float orthoBottom = -(float)height / 200.0f; // -size / 2.0f;
+	float orthoTop = (float)height / 200.0f; // size / 2.0f;
 	// Perspective
 	float fov = 45.0f;
 	
@@ -197,13 +203,13 @@ int main()
 		ImGui_ImplGlfwGL3_NewFrame();
 
 		// Send MVP to shader with uniform
-		// glm::mat4 modelMatrix = glm::mat4(1.0f);
+		glm::mat4 modelMatrix = glm::mat4(1.0f);
 		glm::mat4 rotationMatrix = glm::mat4(1.0f);
 		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationXDegrees), rotationXAxis);
 		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationYDegrees), rotationYAxis);
 		rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotationZDegrees), rotationZAxis);
 		glm::mat4 translateMatrix = glm::translate(glm::mat4(1.0f), translateVector);
-		glm::mat4 modelMatrix = translateMatrix * rotationMatrix;
+		modelMatrix = translateMatrix * rotationMatrix;
 		glm::mat4 viewMatrix = glm::mat4(1.0f);
 		glm::mat4 modelViewProjection;
 
@@ -220,13 +226,15 @@ int main()
 		{
 			if (showOrthoProjection)
 			{
-				glm::mat4 orthoProjection = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, 0.1f, 100.0f);
+				glm::mat4 orthoProjection = glm::mat4(1.0f);
+				orthoProjection = glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, 0.1f, 100.0f);
 				if (useViewMatrix) modelViewProjection = orthoProjection * viewMatrix * modelMatrix;
 				else modelViewProjection = orthoProjection * modelMatrix;
 			}
 			else
 			{
-				glm::mat4 perspectiveProjection = glm::perspective(fov, (float)width / (float)height, 0.1f, 100.0f);
+				glm::mat4 perspectiveProjection = glm::mat4(1.0f);
+				perspectiveProjection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 100.0f);
 				if (useViewMatrix) modelViewProjection = perspectiveProjection * viewMatrix * modelMatrix;
 				else modelViewProjection = perspectiveProjection * modelMatrix;
 			}
@@ -283,10 +291,10 @@ int main()
 				if (showOrthoProjection)
 				{
 					// TODO: add sliders for ortho projection
-					ImGui::SliderFloat("Ortho Left", &orthoLeft, -5.0f, 0.0f, "%.1f", 1.0f);
-					ImGui::SliderFloat("Ortho Right", &orthoRight, 0.0f, 5.0f, "%.1f", 1.0f);
-					ImGui::SliderFloat("Ortho Bottom", &orthoBottom, -5.0f, 0.0f, "%.1f", 1.0f);
-					ImGui::SliderFloat("Ortho Top", &orthoTop, 0.0f, 5.0f, "%.1f", 1.0f);
+					ImGui::Text("Ortho Left %f", orthoLeft);
+					ImGui::Text("Ortho Right %f", orthoRight);
+					ImGui::Text("Ortho Bottom %f", orthoBottom);
+					ImGui::Text("Ortho Top %f", orthoTop);
 				}
 				else
 				{
@@ -303,9 +311,9 @@ int main()
 		ImGui::Render();
 		ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
-		int display_w, display_h;
+		/*int display_w, display_h;
 		glfwGetFramebufferSize(window, &display_w, &display_h);
-		glViewport(0, 0, display_w, display_h);
+		glViewport(0, 0, display_w, display_h);*/
 
 		glfwSwapBuffers(window);
 	}
@@ -317,3 +325,35 @@ int main()
 
 	return 0;
 }
+
+void frameBufferSizeCallback(GLFWwindow* window, int widthOfFramebuffer, int heightOfFramebuffer)
+{
+	https://diegomacario.github.io/2021/04/23/how-to-keep-the-aspect-ratio-of-an-opengl-window-constant.html
+	/*float aspectRatio = 1280.0f / 720.0f;
+	std::cout << "resize" << std::endl;
+	int widthOfViewport, heightOfViewport;
+
+	float requiredHeightOfViewport = widthOfFramebuffer * (1.0f / aspectRatio);
+
+	if (requiredHeightOfViewport > heightOfFramebuffer)
+	{
+		float requiredWidthOfViewport = heightOfFramebuffer * aspectRatio;
+
+		if (requiredWidthOfViewport > widthOfFramebuffer)
+		{
+			std::cout << "Cannot find a good ratio to resize. This line should not be reached" << std::endl;
+		}
+		else
+		{
+			widthOfViewport = static_cast<int>(requiredWidthOfViewport);
+			heightOfViewport = heightOfFramebuffer;
+		}
+	}
+	else
+	{
+		widthOfViewport = widthOfFramebuffer;
+		heightOfViewport = static_cast<int>(requiredHeightOfViewport);
+	}*/
+
+	glViewport(0, 0, widthOfFramebuffer, heightOfFramebuffer);
+};
